@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cheetah · Worklist Feedback Export Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFFFFF;--s1:#F7F8FA;--s2:#F1F3F6;--s3:#EEF1F5;--s4:#E6EAF0;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --text:#0F172A;--sub:#475569;--muted:#94A3B8;--muted2:#CBD5E1;
+  --teal:#0C9C8C;--teal2:#0A8478;--blue:#2563EB;
+  --yes:#16A34A;--no:#DC2626;--unk:#D97706;--purple:#7C3AED;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.hdr{background:var(--s1);border-bottom:1px solid var(--border);padding:0 18px;height:46px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-ic{width:28px;height:28px;background:linear-gradient(135deg,#0CC8B4,#3B82F6);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.logo-nm{font-size:13px;font-weight:700;letter-spacing:.05em}
+.logo-sb{font-size:8px;color:var(--muted);margin-top:1px}
+.hdr-sep{width:1px;height:26px;background:var(--border)}
+.upload-row{margin-left:auto;display:flex;align-items:center;gap:8px}
+#fileInput{display:none}
+.btn{border:1px solid var(--border);background:var(--s2);padding:6px 13px;border-radius:7px;font-size:11px;cursor:pointer;color:var(--sub);font-weight:600;font-family:'Inter',sans-serif;transition:.15s}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn.demo{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.demo:hover{background:var(--teal2)}
+.row-count{font-size:10px;color:var(--muted)}
+
+.body{display:flex;flex:1;overflow:hidden}
+
+.sidebar{width:290px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-hdr{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.sb-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.sb-search,.sb-filter{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:10.5px;color:var(--text);outline:none;font-family:'Inter',sans-serif}
+.sb-search::placeholder{color:var(--muted)}
+.sb-filter{cursor:pointer}
+.sb-filter-row{display:flex;gap:6px}
+.sb-filter-row .sb-filter{flex:1}
+.sb-list{flex:1;overflow-y:auto;padding:10px}
+.sb-empty{color:var(--muted);font-size:11px;padding:26px 14px;text-align:center;line-height:1.7}
+.fb-card{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 11px;margin-bottom:8px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.fb-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:.15s}
+.fb-card:hover{border-color:rgba(12,156,140,.4)}
+.fb-card.active{border-color:var(--teal);background:rgba(12,156,140,.06)}
+.fb-card.active::before{background:var(--teal)}
+.fb-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px}
+.fb-type{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 6px;border-radius:4px}
+.ft-rec{background:rgba(37,99,235,.1);color:#2563EB;border:1px solid rgba(37,99,235,.25)}
+.ft-elig{background:rgba(124,58,237,.1);color:#7C3AED;border:1px solid rgba(124,58,237,.25)}
+.fb-score{font-size:8px;font-weight:700;padding:2px 7px;border-radius:9px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.fb-score.pos{background:rgba(22,163,74,.1);color:#16A34A;border:1px solid rgba(22,163,74,.25)}
+.fb-score.neg{background:rgba(220,38,38,.1);color:#DC2626;border:1px solid rgba(220,38,38,.25)}
+.fb-patient{font-size:11px;font-weight:600;margin-bottom:3px}
+.fb-text{font-size:10.5px;color:var(--sub);line-height:1.4;margin-bottom:6px}
+.fb-meta{font-size:8.5px;color:var(--muted)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow-y:auto}
+.placeholder{color:var(--muted);font-size:13px;margin:auto;text-align:center}
+
+.run-bar{background:var(--s1);border-bottom:1px solid var(--border);padding:14px 20px;flex-shrink:0}
+.rb-top{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.rb-id{font-size:16px;font-weight:700}
+.rb-meta{font-size:10.5px;color:var(--muted);margin-top:2px}
+.rb-pathway{font-size:10.5px;color:var(--sub);margin-top:4px}
+.rb-episode{font-size:10.5px;color:var(--muted);margin-top:4px}
+.rb-episode-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--sub);font-weight:600}
+
+.rb-right{margin-left:auto;text-align:right}
+.outcome-badge{font-size:10px;font-weight:700;padding:4px 11px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;display:inline-block}
+.ob-pos{background:rgba(22,163,74,.1);color:#16A34A;border:1px solid rgba(22,163,74,.25)}
+.ob-neg{background:rgba(220,38,38,.1);color:#DC2626;border:1px solid rgba(220,38,38,.25)}
+.rb-score{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--teal);margin-top:6px}
+
+.content-area{padding:18px 20px;display:flex;flex-direction:column;gap:16px}
+.stage-grid{display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start}
+.right-rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:0;max-height:calc(100vh - 220px);overflow-y:auto}
+@media (max-width:900px){
+  .stage-grid{grid-template-columns:1fr}
+  .right-rail{position:static;max-height:none}
+}
+
+.section-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.section-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-title .count{color:var(--teal);font-family:'JetBrains Mono',monospace}
+
+.feedback-banner{padding:11px 15px;border-radius:8px;border-left:4px solid var(--teal);background:var(--s3);font-size:12px}
+.feedback-banner b{display:block;margin-bottom:3px}
+
+.flow-wrap{overflow-x:auto}
+#flowSvg{display:block;margin:0 auto}
+
+.node-legend{display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:9px;color:var(--muted)}
+.leg{display:flex;align-items:center;gap:4px}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+
+.detail-empty{color:var(--muted);font-size:11px;padding:10px 0;line-height:1.6}
+.node-detail-panel{margin-top:14px;background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:12px 14px}
+.node-detail-panel .ndp-title{font-size:11.5px;font-weight:700;margin-bottom:8px}
+.ndp-row{margin-bottom:8px}
+.ndp-k{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:2px}
+.ndp-v{font-size:11px;line-height:1.5}
+.ndp-v.mono{font-family:'JetBrains Mono',monospace;font-size:10px}
+
+.llm-list,.evidence-list{display:flex;flex-direction:column;gap:8px}
+.llm-item{background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px}
+.llm-item-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.llm-type{font-size:8px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(124,58,237,.1);color:var(--purple);border:1px solid rgba(124,58,237,.25)}
+.llm-model{font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--sub)}
+.llm-stats{margin-left:auto;font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.llm-preview{font-size:10.5px;color:var(--text);background:var(--s1);padding:7px 9px;border-radius:6px;font-family:'JetBrains Mono',monospace}
+
+.ev-item{background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px}
+.ev-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ev-key{font-size:11px;font-weight:600}
+.ev-src{margin-left:auto;font-size:8.5px;padding:2px 7px;border-radius:4px;background:rgba(12,156,140,.08);color:var(--teal);border:1px solid rgba(12,156,140,.2)}
+.ev-quote{font-size:10.5px;color:var(--sub);line-height:1.5;font-style:italic}
+.ev-rationale{font-size:9.5px;color:var(--muted);margin-top:5px}
+
+.sig-item{background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.sig-label{font-size:8px;font-weight:700;text-transform:uppercase;color:var(--teal);margin-bottom:4px;letter-spacing:.05em}
+.sig-value{font-size:11px;font-weight:600;margin-bottom:2px}
+.sig-source{font-size:9px;color:var(--muted)}
+.pathway-rationale{font-size:11.5px;line-height:1.55;color:var(--text);margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-ic">🐆</div>
+    <div><div class="logo-nm">CHEETAH</div><div class="logo-sb">Worklist Feedback Export Viewer</div></div>
+  </div>
+  <div class="hdr-sep"></div>
+  <div class="upload-row">
+    <span class="row-count" id="rowCount"></span>
+    <label class="btn" for="fileInput">Upload worklist_feedback_export.csv</label>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+</div>
+
+<div class="body">
+  <div class="sidebar">
+    <div class="sb-hdr">
+      <div class="sb-title">Feedback Entries</div>
+      <input class="sb-search" id="sbSearch" type="text" placeholder="Search patient, feedback...">
+      <div class="sb-filter-row">
+        <select class="sb-filter" id="sbTypeFilter">
+          <option value="">All types</option>
+          <option value="recommendation_feedback">Recommendation</option>
+          <option value="eligibility_feedback">Eligibility</option>
+        </select>
+        <select class="sb-filter" id="sbReviewerFilter">
+          <option value="">All reviewers</option>
+        </select>
+      </div>
+    </div>
+    <div class="sb-list" id="sidebar"><div class="sb-empty">Upload the export CSV, or load the sample, to begin.</div></div>
+  </div>
+
+  <div class="main" id="main">
+    <div class="placeholder">Select a feedback entry on the left to review it.</div>
+  </div>
+</div>
+
+<script>
+let ROWS = [];
+const NS='http://www.w3.org/2000/svg';
+function se(tag,a={}){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e;}
+function st(txt,a={}){const e=se('text',a);e.textContent=txt;return e;}
+function esc(s){return (s===null||s===undefined?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function truncate(s,n){s=(s||'').toString();return s.length>n?s.slice(0,n-1)+'…':s;}
+const JSON_PARSE_FAILURES = {};
+
+function safeJson(str, fieldName){
+  if(!str) return null;
+  try {
+    let val = JSON.parse(str);
+    // Handle double-encoded JSON: if parsing gives back a string (rather than
+    // an object/array), that string is itself JSON text and needs a second parse.
+    let guard = 0;
+    while(typeof val === 'string' && guard < 3){
+      try { val = JSON.parse(val); } catch(eInner) { break; }
+      guard++;
+    }
+    return val;
+  }
+  catch(e1) {
+    // Repair attempt 1: unescape backslash-escaped quotes (common when a JSON
+    // string gets double-encoded before being written to CSV).
+    try {
+      const repaired = String(str).replace(/\\"/g, '"');
+      const parsed = JSON.parse(repaired);
+      console.warn('safeJson: parsed only after removing backslash-escaped quotes for field', fieldName || '(unknown)');
+      return parsed;
+    } catch(e2) {}
+    // Repair attempt 2: the field may have literal doubled quotes ("") left
+    // over from CSV-level escaping that never got collapsed.
+    try {
+      const repaired2 = String(str).replace(/""/g, '"');
+      const parsed2 = JSON.parse(repaired2);
+      console.warn('safeJson: parsed only after collapsing doubled quotes for field', fieldName || '(unknown)');
+      return parsed2;
+    } catch(e3) {}
+    console.warn('safeJson: failed to parse JSON field "'+(fieldName||'unknown')+'".', e1.message, '\nRaw value (first 800 chars):', String(str).slice(0,800));
+    if(fieldName) JSON_PARSE_FAILURES[fieldName] = String(str);
+    return null;
+  }
+}
+
+function deriveResult(fe){
+  if(fe.support_status==='missing' || fe.unknown_reason) return 'unknown';
+  if(fe.bool_value===true) return 'yes';
+  if(fe.bool_value===false) return 'no';
+  if(fe.support_status==='accepted') return 'yes';
+  return 'unknown';
+}
+function branchInfo(result){
+  const v=String(result||'').toLowerCase();
+  if(v==='yes') return {cls:'yes',label:'YES',color:'#16A34A',fill:'rgba(22,163,74,.08)'};
+  if(v==='no') return {cls:'no',label:'NO',color:'#DC2626',fill:'rgba(220,38,38,.08)'};
+  return {cls:'unk',label:'UNKNOWN',color:'#D97706',fill:'rgba(217,119,6,.1)'};
+}
+
+// ── Ingest ──
+function ingest(rows){
+  ROWS = rows.filter(r => r.feedback_id);
+  document.getElementById('rowCount').textContent = ROWS.length + ' rows loaded';
+  populateReviewerFilter();
+  applyFilters();
+}
+
+function populateReviewerFilter(){
+  const select = document.getElementById('sbReviewerFilter');
+  const reviewers = Array.from(new Set(ROWS.map(r => (r.launch_actor_display_name||'').trim()).filter(Boolean))).sort();
+  select.innerHTML = '<option value="">All reviewers</option>' + reviewers.map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('');
+}
+
+function applyFilters(){
+  const q = document.getElementById('sbSearch').value.toLowerCase();
+  const reviewer = document.getElementById('sbReviewerFilter').value;
+  const type = document.getElementById('sbTypeFilter').value;
+  const filtered = ROWS.filter(r => {
+    const matchesText = !q || (r.patient_display_name||'').toLowerCase().includes(q) ||
+      (r.patient_key||'').toLowerCase().includes(q) ||
+      (r.feedback_text||'').toLowerCase().includes(q) ||
+      (r.workflow_key||'').toLowerCase().includes(q) ||
+      (r.pathway_display_name||'').toLowerCase().includes(q);
+    const matchesReviewer = !reviewer || (r.launch_actor_display_name||'') === reviewer;
+    const matchesType = !type || r.feedback_type === type;
+    return matchesText && matchesReviewer && matchesType;
+  });
+  renderSidebar(filtered);
+}
+
+document.getElementById('sbSearch').addEventListener('input', applyFilters);
+document.getElementById('sbReviewerFilter').addEventListener('change', applyFilters);
+document.getElementById('sbTypeFilter').addEventListener('change', applyFilters);
+
+function renderSidebar(rows){
+  const sidebar=document.getElementById('sidebar');
+  if(rows.length===0){ sidebar.innerHTML='<div class="sb-empty">No matching rows.</div>'; return; }
+  sidebar.innerHTML='';
+  rows.forEach((r)=>{
+    const idx = ROWS.indexOf(r);
+    const isRec = r.feedback_type === 'recommendation_feedback';
+    const positive = isRec
+      ? !(r.override_reason_code||'').toLowerCase().includes('not_appropriate')
+      : (r.feedback_choice||'').toLowerCase()==='correct' || (r.eligibility_decision||'').toLowerCase()==='eligible';
+    const card=document.createElement('div');
+    card.className='fb-card';
+    card.dataset.idx=idx;
+    card.innerHTML=`
+      <div class="fb-top">
+        <span class="fb-type ${isRec?'ft-rec':'ft-elig'}">${isRec?'Recommendation':'Eligibility'}</span>
+        <span class="fb-score ${positive?'pos':'neg'}">${positive?'positive':'flagged'}</span>
+      </div>
+      <div class="fb-patient">${esc(r.patient_display_name)||esc(r.patient_key)||'Unknown patient'}</div>
+      <div class="fb-text">${esc(r.feedback_text)||'<span style="color:var(--muted)">No comment</span>'}</div>
+      <div class="fb-meta">${esc(r.pathway_display_name)||esc(r.workflow_key)||''} · ${esc(r.launch_actor_display_name)||'—'} · ${esc(r.submitted_at)||'—'}</div>
+    `;
+    card.addEventListener('click',()=>selectRow(idx));
+    sidebar.appendChild(card);
+  });
+}
+
+// ── Select a feedback row ──
+function selectRow(idx){
+  document.querySelectorAll('.fb-card').forEach(c=>c.classList.toggle('active', parseInt(c.dataset.idx)===idx));
+  const r = ROWS[idx];
+  const main = document.getElementById('main');
+  const isRec = r.feedback_type === 'recommendation_feedback';
+  const positive = isRec
+    ? !(r.override_reason_code||'').toLowerCase().includes('not_appropriate')
+    : (r.feedback_choice||'').toLowerCase()==='correct' || (r.eligibility_decision||'').toLowerCase()==='eligible';
+
+  let bodyHtml;
+  if(isRec){
+    bodyHtml = renderRecommendationBody(r, positive);
+  } else {
+    bodyHtml = renderEligibilityBody(r, positive);
+  }
+
+  main.innerHTML = `
+    <div class="run-bar">
+      <div class="rb-top">
+        <div>
+          <div class="rb-id">${esc(r.patient_display_name)||esc(r.patient_key)||'Unknown patient'}</div>
+          <div class="rb-meta">Reviewed by ${esc(r.launch_actor_display_name)||'—'} · ${esc(r.submitted_at)||'—'}${r.recommendation_run_id ? ' · run #'+esc(r.recommendation_run_id) : ''}</div>
+          <div class="rb-pathway">${esc(r.pathway_display_name)||esc(r.workflow_key)||'—'}${r.pathway_version_label ? ' · '+esc(r.pathway_version_label) : ''}</div>
+          ${r.care_episode_id ? `<div class="rb-episode">Care Episode: <span class="rb-episode-id">${esc(r.care_episode_id)}</span></div>` : ''}
+        </div>
+
+        <div class="rb-right">
+          <span class="outcome-badge ${positive?'ob-pos':'ob-neg'}">${isRec ? esc((r.override_reason_code||'—').replace(/_/g,' ')) : esc(r.eligibility_decision || r.feedback_choice || '—')}</span>
+          ${r.completeness_score ? `<div class="rb-score">${(parseFloat(r.completeness_score)*100).toFixed(0)}% completeness</div>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="content-area">
+      ${isRec ? `
+      <div class="section-card">
+        <div class="section-title">System Recommendation</div>
+        <div class="feedback-banner" style="border-left-color:var(--blue)">
+          <b>${esc(r.recommendation_label) || '<span style="color:var(--muted)">No recommendation label</span>'}</b>
+          ${r.recommendation_type ? `Type: ${esc(r.recommendation_type).replace(/_/g,' ')}` : ''}${r.terminal_key ? ` · Terminal: ${esc(r.terminal_key)}` : ''}
+        </div>
+      </div>
+      ` : ''}
+      <div class="section-card">
+        <div class="section-title">Reviewer Feedback</div>
+        <div class="feedback-banner">
+          <b>${esc(r.feedback_text) || 'No comment provided'}</b>
+          ${isRec ? `Usefulness score: ${esc(r.usefulness_score)||'—'}` : `Decision: ${esc(r.eligibility_decision)||'—'} · Choice: ${esc(r.feedback_choice)||'—'}`}
+        </div>
+      </div>
+      ${bodyHtml}
+    </div>
+  `;
+
+  if(isRec){
+    const featureEvidence = safeJson(r.feature_evidence_json, 'feature_evidence_json') || [];
+    const auditTrace = safeJson(r.audit_trace_json, 'audit_trace_json');
+    const decisionPath = (auditTrace && Array.isArray(auditTrace.decision_path)) ? auditTrace.decision_path : [];
+    const nodesVisited = decisionPath.map(step => ({
+      node_key: step.node_id || step.feature_id,
+      feature_key: step.feature_id,
+      result: step.branch,
+      target: step.target || null
+    }));
+    if(nodesVisited.length) drawFlow(nodesVisited, featureEvidence);
+  }
+}
+
+// ── Recommendation feedback: flow + evidence + llm traces ──
+function renderRecommendationBody(r, positive){
+  const featureEvidence = safeJson(r.feature_evidence_json, 'feature_evidence_json') || [];
+  const llmTraces = safeJson(r.llm_traces_json, 'llm_traces_json') || [];
+  const auditTrace = safeJson(r.audit_trace_json, 'audit_trace_json');
+  const decisionPath = (auditTrace && Array.isArray(auditTrace.decision_path)) ? auditTrace.decision_path : [];
+  const nodeCount = decisionPath.length;
+
+  return `
+    <div class="stage-grid">
+      <div>
+        <div class="section-card">
+          <div class="section-title">Decision Flow <span class="count">${nodeCount} nodes</span></div>
+          ${nodeCount ? `
+          <div class="node-legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--yes)"></div>YES</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--no)"></div>NO</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--unk)"></div>UNKNOWN</div>
+          </div>
+          <div class="flow-wrap"><svg id="flowSvg" viewBox="0 0 640 ${Math.max(200, nodeCount*110+40)}" preserveAspectRatio="xMidYMid meet"></svg></div>
+          ` : `
+          <div class="detail-empty">
+            ${r.audit_trace_json ? (auditTrace ? 'audit_trace_json parsed, but no <code>decision_path</code> array was found inside it.' : 'audit_trace_json is present for this row but could not be parsed as JSON.') : 'No audit_trace_json value found for this row.'}
+          </div>
+          ${(!auditTrace && r.audit_trace_json) ? `
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer; font-size:11px; color:var(--sub);">Show raw audit_trace_json value (what the parser actually received)</summary>
+            <pre style="white-space:pre-wrap; word-break:break-word; font-family:'JetBrains Mono',monospace; font-size:10.5px; background:var(--s1); padding:10px; border-radius:6px; margin-top:8px; max-height:300px; overflow-y:auto;">${esc(r.audit_trace_json)}</pre>
+          </details>
+          ` : ''}
+          `}
+        </div>
+      </div>
+      <div class="right-rail">
+        <div class="section-card">
+          <div class="section-title">Step Detail</div>
+          <div id="nodeDetailPanel"><div class="detail-empty">Click a node in the flow to see its evidence and reasoning.</div></div>
+        </div>
+        ${featureEvidence.length ? `
+        <div class="section-card">
+          <div class="section-title">Feature Evidence <span class="count">${featureEvidence.length}</span></div>
+          <div class="evidence-list">
+            ${featureEvidence.map(fe => `
+              <div class="ev-item">
+                <div class="ev-top">
+                  <span class="ev-key">${esc(fe.feature_key)}</span>
+                  <span class="ev-src">${esc(fe.chosen_source_type)||esc(fe.evidence_type)||'—'}</span>
+                </div>
+                <div class="ev-quote">${esc(fe.evidence_quote || fe.chosen_source_detail || '—')}</div>
+                ${fe.extraction_rationale ? `<div class="ev-rationale">${esc(fe.extraction_rationale)}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ''}
+        ${llmTraces.length ? `
+        <div class="section-card">
+          <div class="section-title">LLM Traces <span class="count">${llmTraces.length}</span></div>
+          <div class="llm-list">
+            ${llmTraces.map(t => `
+              <div class="llm-item">
+                <div class="llm-item-top">
+                  <span class="llm-type">${esc(t.invocation_type)||'call'}</span>
+                  <span class="llm-model">${esc(t.model)||'—'}${t.feature_key ? ' · '+esc(t.feature_key) : ''}</span>
+                  <span class="llm-stats">${t.input_tokens||0}/${t.output_tokens||0} tok · ${t.latency_ms||0}ms</span>
+                </div>
+                ${t.response_preview ? `<div class="llm-preview">${esc(t.response_preview)}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ''}
+        ${auditTrace ? `
+        <div class="section-card">
+          <div class="section-title">Audit Trace (raw)</div>
+          <details>
+            <summary style="cursor:pointer; font-size:11px; color:var(--sub);">Show full JSON</summary>
+            <pre style="white-space:pre-wrap; word-break:break-word; font-family:'JetBrains Mono',monospace; font-size:10.5px; background:var(--s1); padding:10px; border-radius:6px; margin-top:8px; max-height:260px; overflow-y:auto;">${esc(JSON.stringify(auditTrace, null, 2))}</pre>
+          </details>
+        </div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ── Eligibility feedback: NO flow, NO feature evidence, NO llm traces — just parsed eligibility_snapshot ──
+function renderEligibilityBody(r, positive){
+  const snapshot = safeJson(r.eligibility_snapshot, 'eligibility_snapshot');
+  if(!snapshot){
+    return `<div class="section-card"><div class="detail-empty">No eligibility snapshot data available for this entry.</div></div>`;
+  }
+  const pathways = snapshot.pathways || [];
+  return `
+    <div class="section-card">
+      <div class="section-title">Eligibility Snapshot ${snapshot.model ? `<span class="count">${esc(snapshot.model)}</span>` : ''}</div>
+      ${pathways.length ? pathways.map(p => `
+        <div style="margin-bottom:14px;">
+          <div class="ev-src" style="display:inline-block; margin-bottom:6px;">${esc(p.pathway_id)||'—'}</div>
+          <div class="pathway-rationale">${esc(p.rationale)||'No rationale provided.'}</div>
+          ${(p.matched_signals||[]).map(sig => `
+            <div class="sig-item">
+              <div class="sig-label">${esc(sig.label)||'signal'}</div>
+              <div class="sig-value">${esc(sig.value)||'—'}</div>
+              <div class="sig-source">source: ${esc(sig.source)||'—'}</div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('') : `<div class="detail-empty">No pathway signals recorded in this snapshot.</div>`}
+      ${snapshot.evaluated_at ? `<div class="fb-meta" style="margin-top:4px;">Evaluated at ${esc(snapshot.evaluated_at)}</div>` : ''}
+    </div>
+  `;
+}
+
+function drawFlow(nodes, featureEvidence){
+  const svg=document.getElementById('flowSvg');
+  if(!svg) return;
+  svg.innerHTML='';
+  const defs=se('defs');
+  const fGlow=se('filter',{id:'glow',x:'-40%',y:'-40%',width:'180%',height:'180%'});
+  const fBlur=se('feGaussianBlur',{stdDeviation:'3',result:'c'});
+  const fMerge=se('feMerge');
+  [se('feMergeNode',{in:'c'}),se('feMergeNode',{in:'SourceGraphic'})].forEach(n=>fMerge.appendChild(n));
+  fGlow.appendChild(fBlur); fGlow.appendChild(fMerge); defs.appendChild(fGlow);
+  svg.appendChild(defs);
+
+  const boxW=460, boxH=64, vGap=44, topPad=20, cx=320;
+  const centers=[];
+  let y=topPad;
+  nodes.forEach(()=>{ centers.push({x:cx,yTop:y,yBottom:y+boxH,yMid:y+boxH/2}); y=y+boxH+vGap; });
+
+  const eg=se('g');
+  nodes.forEach((n,i)=>{
+    if(i===0) return;
+    const prevBi=branchInfo(nodes[i-1].result);
+    const c1=centers[i-1], c2=centers[i];
+    const path=se('path',{d:`M${c1.x},${c1.yBottom} C${c1.x},${c1.yBottom+22} ${c2.x},${c2.yTop-22} ${c2.x},${c2.yTop}`,fill:'none',stroke:prevBi.color,'stroke-width':'2'});
+    eg.appendChild(path);
+    const midY=(c1.yBottom+c2.yTop)/2;
+    eg.appendChild(se('rect',{x:cx+8,y:midY-8,width:'44',height:'15',fill:'#FFFFFF',stroke:'#E2E8F0','stroke-width':'1',rx:'3'}));
+    eg.appendChild(st(prevBi.label.slice(0,3),{x:cx+30,y:midY+3,'text-anchor':'middle','font-size':'9','font-weight':'700','font-family':'Inter,sans-serif',fill:prevBi.color}));
+  });
+  svg.appendChild(eg);
+
+  const ng=se('g');
+  nodes.forEach((n,i)=>{
+    const c=centers[i];
+    const bi=branchInfo(n.result);
+    const nx=cx-boxW/2, ny=c.yTop;
+    const g=se('g',{style:'cursor:pointer'});
+    const rect=se('rect',{x:nx,y:ny,width:boxW,height:boxH,fill:bi.fill,stroke:bi.color,'stroke-width':'2',rx:'10',filter:'url(#glow)'});
+    g.appendChild(rect);
+    g.appendChild(st('step '+(i+1),{x:nx+16,y:ny+20,'font-size':'9','font-family':'JetBrains Mono,monospace',fill:'#506480'}));
+    g.appendChild(st(truncate(n.node_key||n.feature_key||'node',44),{x:nx+16,y:ny+38,'font-size':'13','font-weight':'600','font-family':'Inter,sans-serif',fill:'#0F172A'}));
+    const pillW=68;
+    g.appendChild(se('rect',{x:nx+boxW-pillW-14,y:ny+12,width:pillW,height:20,rx:'10',fill:bi.fill}));
+    g.appendChild(st(bi.label,{x:nx+boxW-pillW/2-14,y:ny+26,'text-anchor':'middle','font-size':'9.5','font-weight':'700','font-family':'Inter,sans-serif',fill:bi.color}));
+    if(n.reason){
+      g.appendChild(st(truncate(n.reason,64),{x:nx+16,y:ny+56,'font-size':'9.5','font-family':'Inter,sans-serif',fill:'#64748b'}));
+    }
+    g.addEventListener('click',()=>showNodeDetail(n, featureEvidence));
+    ng.appendChild(g);
+  });
+  svg.appendChild(ng);
+}
+
+function showNodeDetail(n, featureEvidence){
+  const bi=branchInfo(n.result);
+  const matchedEvidence = featureEvidence.find(fe => fe.feature_key === n.feature_key);
+  const panel=document.getElementById('nodeDetailPanel');
+  panel.innerHTML=`
+    <div class="node-detail-panel">
+      <div class="ndp-title">${esc(n.node_key || n.feature_key)}</div>
+      <div class="ndp-row"><div class="ndp-k">Result</div><div class="ndp-v" style="color:${bi.color};font-weight:700">${bi.label}</div></div>
+      <div class="ndp-row"><div class="ndp-k">Next node</div><div class="ndp-v mono">${esc(n.target)||'— terminal —'}</div></div>
+      ${matchedEvidence ? `
+        <div class="ndp-row"><div class="ndp-k">Source</div><div class="ndp-v mono">${esc(matchedEvidence.chosen_source_type)||'—'}</div></div>
+        <div class="ndp-row"><div class="ndp-k">Claims / CCD evidence</div><div class="ndp-v">${esc(matchedEvidence.evidence_quote || matchedEvidence.chosen_source_detail)||'—'}</div></div>
+        <div class="ndp-row"><div class="ndp-k">Extraction rationale</div><div class="ndp-v">${esc(matchedEvidence.extraction_rationale)||'—'}</div></div>
+      ` : `<div class="ndp-row"><div class="ndp-k">Evidence</div><div class="ndp-v" style="color:var(--muted)">No matching feature_evidence entry for this node.</div></div>`}
+    </div>
+  `;
+}
+
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  Papa.parse(file,{header:true, skipEmptyLines:true, complete: results=>ingest(results.data)});
+});
+
+</script>
+</body>
+</html>
