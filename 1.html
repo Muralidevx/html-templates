@@ -1,0 +1,408 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Knee Pathway Gaps</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF8F4; --surface:#FFFFFF; --surface-2:#F3F0E8; --border:#E6E1D5;
+    --text:#20241F; --text-dim:#666F62; --text-faint:#9AA095;
+    --accent:#1D5C52; --accent-soft:#E4EEE9; --accent-ink:#0E332D;
+    --new:#9C5B22; --new-soft:#F6E8DA;
+    --critical:#B23A2E; --critical-soft:#FBE7E3;
+    --medium:#96700F; --medium-soft:#FBF0DA;
+    --low:#5C6660; --low-soft:#ECEAE2;
+    --open:#5B4B9E; --open-soft:#ECE7F8;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14181A; --surface:#1B211F; --surface-2:#20302A; --border:#2C3532;
+      --text:#EAEDE8; --text-dim:#A7AFA8; --text-faint:#727B74;
+      --accent:#5FAE9B; --accent-soft:#1E2F2A; --accent-ink:#BFE8DA;
+      --new:#D99A5C; --new-soft:#2E2519;
+      --critical:#E38377; --critical-soft:#32211F;
+      --medium:#E0B85B; --medium-soft:#332A18;
+      --low:#9AA39C; --low-soft:#222824;
+      --open:#B0A0E8; --open-soft:#241F35;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14181A; --surface:#1B211F; --surface-2:#20302A; --border:#2C3532;
+    --text:#EAEDE8; --text-dim:#A7AFA8; --text-faint:#727B74;
+    --accent:#5FAE9B; --accent-soft:#1E2F2A; --accent-ink:#BFE8DA;
+    --new:#D99A5C; --new-soft:#2E2519;
+    --critical:#E38377; --critical-soft:#32211F;
+    --medium:#E0B85B; --medium-soft:#332A18;
+    --low:#9AA39C; --low-soft:#222824;
+    --open:#B0A0E8; --open-soft:#241F35;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); color:var(--text); font-family:"Inter",system-ui,sans-serif; margin:0; padding-inline:20px; padding-block:0 40px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px; margin:0 auto;}
+  header.page{padding-block:36px 22px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:10px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); font-weight:500;}
+  h1{font-family:"Fraunces",serif; font-weight:600; font-size:clamp(28px,5vw,40px); line-height:1.08; margin:0; letter-spacing:-.01em; text-wrap:balance;}
+  .sub{color:var(--text-dim); font-size:15px; max-width:60ch; line-height:1.55; margin:0;}
+  .stat-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+  .stat{display:flex; align-items:baseline; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px 12px;}
+  .stat b{font-family:"Fraunces",serif; font-size:19px; font-weight:600;}
+  .stat span{font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em;}
+  .stat.critical b{color:var(--critical);} .stat.medium b{color:var(--medium);}
+  .stat.low b{color:var(--low);} .stat.open b{color:var(--open);}
+
+  nav.tabs{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg); display:flex; gap:4px; padding-block:12px; border-bottom:1px solid var(--border); overflow-x:auto;}
+  nav.tabs button{font-family:"Inter",sans-serif; font-size:13.5px; font-weight:600; color:var(--text-dim); background:transparent; border:1px solid transparent; padding:7px 14px; border-radius:20px; cursor:pointer; white-space:nowrap;}
+  nav.tabs button.active{background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent);}
+  nav.tabs button:hover:not(.active){background:var(--surface-2);}
+
+  section.panel{display:none; padding-block:26px 10px;}
+  section.panel.active{display:block;}
+  h2.sec{font-family:"Fraunces",serif; font-size:21px; font-weight:600; margin:0 0 4px;}
+  p.sec-note{color:var(--text-dim); font-size:14px; margin:0 0 18px; max-width:66ch; line-height:1.55;}
+
+  .compare-mini{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  @media(max-width:560px){.compare-mini{grid-template-columns:1fr;}}
+  .mini-block{border-radius:10px; padding:11px 13px; font-size:13px; line-height:1.5;}
+  .mini-block.old{background:var(--surface-2);}
+  .mini-block.new{background:var(--new-soft);}
+  .mini-block .lab{font-family:"IBM Plex Mono",monospace; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-dim); display:block; margin-bottom:5px;}
+  .mini-block.new .lab{color:var(--new);}
+  code.field{font-family:"IBM Plex Mono",monospace; font-size:12px; background:var(--surface-2); padding:1px 5px; border-radius:4px;}
+
+  /* Flowchart */
+  .fc-legend{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; font-size:12px; color:var(--text-dim); align-items:center;}
+  .fc-legend .sw{width:12px; height:12px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:-2px; border:1.4px solid var(--border); background:var(--surface);}
+  .fc-legend .sw.diverge{background:var(--critical-soft); border-color:var(--critical);}
+  .fc-legend .sw.new{background:var(--new-soft); border-color:var(--new); border-style:dashed;}
+  .fc-wrap{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:760px){.fc-wrap{grid-template-columns:1fr;}}
+  .fc-col{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; overflow-x:auto;}
+  .fc-col h3{font-family:"IBM Plex Mono",monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; margin:0 0 10px; display:flex; align-items:center; gap:7px;}
+  .fc-col.old h3{color:var(--text-dim);}
+  .fc-col.new h3{color:var(--new);}
+  .dot{width:7px; height:7px; border-radius:50%; background:currentColor; display:inline-block;}
+  .fc-col svg{width:100%; height:auto; display:block; min-width:340px;}
+  .fc-node rect{fill:var(--surface); stroke:var(--border); stroke-width:1.3; cursor:pointer; transition:stroke-width .12s;}
+  .fc-node text, .fc-node tspan{font:500 10.5px "Inter",sans-serif; fill:var(--text);}
+  .fc-node.diverge rect{fill:var(--critical-soft); stroke:var(--critical); stroke-width:1.6;}
+  .fc-node.diverge text{fill:var(--critical);}
+  .fc-node.new rect{fill:var(--new-soft); stroke:var(--new); stroke-width:1.6; stroke-dasharray:4 2;}
+  .fc-node.new text{fill:var(--new);}
+  .fc-node:hover rect{stroke-width:2.2;}
+  .fc-node.selected rect{stroke-width:2.8;}
+  .fc-term text{font-weight:600;}
+  .fc-edge{fill:none; stroke:var(--text-faint); stroke-width:1.4;}
+  .fc-edgelabel rect{fill:var(--surface); stroke:var(--border); stroke-width:1;}
+  .fc-edgelabel text{font:500 9.5px "IBM Plex Mono",monospace; fill:var(--text-dim);}
+  .fc-detail{margin-top:16px; background:var(--surface-2); border-radius:12px; padding:14px 16px; font-size:13.5px; line-height:1.55; display:flex; flex-direction:column; gap:9px;}
+  .fc-detail .empty{color:var(--text-faint); font-style:italic;}
+  .fc-detail .dhead{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .fc-detail .dpath{font-family:"IBM Plex Mono",monospace; font-size:10px; text-transform:uppercase; letter-spacing:.05em; padding:2px 8px; border-radius:12px; background:var(--surface); border:1px solid var(--border); color:var(--text-dim);}
+  .fc-detail .dtitle{font-weight:600; font-size:14.5px;}
+  .fc-detail .djump{align-self:flex-start; font-family:"Inter",sans-serif; font-size:12.5px; font-weight:600; color:var(--accent); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:2px;}
+
+  /* Gap cards */
+  .gaplist{display:flex; flex-direction:column; gap:12px;}
+  .gapcard{background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden;}
+  .gaphead{display:flex; align-items:center; gap:12px; padding:15px 18px; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .sev{font-family:"IBM Plex Mono",monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; padding:4px 9px; border-radius:20px; flex-shrink:0; font-weight:500;}
+  .sev.critical{background:var(--critical-soft); color:var(--critical);}
+  .sev.medium{background:var(--medium-soft); color:var(--medium);}
+  .sev.low{background:var(--low-soft); color:var(--low);}
+  .gaphead .num{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--text-faint);}
+  .gaphead h3{font-size:15px; font-weight:600; margin:0; flex:1; line-height:1.35;}
+  .chev{color:var(--text-faint); transition:transform .18s ease; flex-shrink:0;}
+  .gapcard.open .chev{transform:rotate(180deg);}
+  .gapbody{display:none; padding:0 18px 18px; border-top:1px solid var(--border);}
+  .gapcard.open .gapbody{display:block; padding-top:14px;}
+
+  .example{background:var(--accent-soft); border-radius:10px; padding:13px 15px; margin-bottom:12px;}
+  .example .lab{font-family:"IBM Plex Mono",monospace; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); display:block; margin-bottom:6px;}
+  .example p{margin:0 0 8px; font-size:13.5px; line-height:1.55;}
+  .example p:last-child{margin-bottom:0;}
+  .example b{color:var(--accent-ink);}
+
+  .fix{display:flex; gap:9px; align-items:flex-start; font-size:13px; line-height:1.55; background:var(--surface-2); border-radius:10px; padding:11px 13px; color:var(--text);}
+  .fix svg{flex-shrink:0; margin-top:2px; color:var(--accent);}
+
+  .qcard{background:var(--open-soft); border:1px solid transparent; border-radius:14px; padding:16px 18px;}
+  .qcard h3{font-size:14.5px; margin:0 0 6px; color:var(--open); font-weight:600;}
+  .qcard p{font-size:13.5px; line-height:1.55; margin:0; color:var(--text);}
+  .qwrap{display:flex; flex-direction:column; gap:12px;}
+
+  footer.note{margin-top:30px; padding-top:16px; border-top:1px solid var(--border); font-size:12px; color:var(--text-faint); line-height:1.6;}
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <span class="eyebrow">Pathway comparison · 2024 → 2026</span>
+    <h1>Total Knee Replacement pathway: what the new chart changes</h1>
+    <p class="sub">Side-by-side read of the current <code class="field">knee_replacement_v0_0_1.yaml</code> logic against Optum's 2026 Total Hip and Knee Replacement Decision Support Tool. Six divergences found — two structural, two threshold-level, two open questions for the clinical team.</p>
+    <div class="stat-row">
+      <div class="stat critical"><b>2</b><span>Structural</span></div>
+      <div class="stat medium"><b>3</b><span>Content</span></div>
+      <div class="stat low"><b>1</b><span>Note only</span></div>
+      <div class="stat open"><b>1</b><span>Open question</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="overview">Overview</button>
+    <button data-tab="flow">Flowchart</button>
+    <button data-tab="gaps">The 6 gaps</button>
+    <button data-tab="open">Ask the team</button>
+  </nav>
+
+  <section class="panel active" id="overview">
+    <h2 class="sec">What this pathway decides</h2>
+    <p class="sec-note">Given a patient with chronic knee pain, the pathway answers one question: is this patient a candidate for referral to a surgeon to evaluate total knee replacement — or should conservative care continue? The 2026 chart keeps that same shape but changes two things in how it gets there: what counts as evidence <i>for</i> the diagnosis, and what has to be documented before it will recommend referral.</p>
+    <div class="compare-mini" style="margin-top:18px;">
+      <div class="mini-block old"><span class="lab">Old pathway — 3 steps</span>Chronic pain + DJD (stiffness must be <b>absent</b>) → adequate conservative trial (3&nbsp;mo PT/NSAID/exercise, 6&nbsp;wk others) → improved?</div>
+      <div class="mini-block new"><span class="lab">New pathway — 4 steps</span>Chronic pain + DJD (stiffness <b>supports</b> it) → 6-week conservative trial, or intolerant/contraindicated → improved? → severity &amp; functional-impact check</div>
+    </div>
+  </section>
+
+  <section class="panel" id="flow">
+    <h2 class="sec">Click any question to see how it works</h2>
+    <p class="sec-note">Both pathways drawn as decision trees. Solid boxes are unchanged questions, dashed amber boxes are new, red boxes carry conflicting logic. Tap a node — the panel below explains it, and diverging nodes link straight to the full gap writeup.</p>
+    <div class="fc-legend">
+      <span><i class="sw"></i>Unchanged question</span>
+      <span><i class="sw diverge"></i>Conflicting logic</span>
+      <span><i class="sw new"></i>New question</span>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-col old"><h3><span class="dot"></span>Old pathway</h3><div id="fc-old"></div></div>
+      <div class="fc-col new"><h3><span class="dot"></span>New pathway</h3><div id="fc-new"></div></div>
+    </div>
+    <div class="fc-detail" id="fc-detail"><span class="empty">Click any question in either flowchart to see what it checks and why it does or doesn't line up with the new chart.</span></div>
+  </section>
+
+  <section class="panel" id="gaps">
+    <h2 class="sec">The 6 divergences, in order of impact</h2>
+    <p class="sec-note">Tap a card to open it. Each one shows the old rule, the new rule, a worked example, and the concrete YAML change it implies.</p>
+    <div class="gaplist" id="gaplist"></div>
+  </section>
+
+  <section class="panel" id="open">
+    <h2 class="sec">Before this goes into the YAML</h2>
+    <p class="sec-note">One thing the chart doesn't spell out — worth confirming with the clinical team rather than assuming an answer.</p>
+    <div class="qwrap">
+      <div class="qcard">
+        <h3>Severity gate: any-one-true, or all-four-true?</h3>
+        <p>The severity &amp; functional-impact question lists four criteria — pain most days, pain at rest/night, progressive functional decline, antalgic gait or assistive-device reliance. The chart doesn't say whether documenting <b>one</b> of these is enough to clear the gate, or whether <b>all four</b> need to be on record. This is a real fork: "any true" would refer most patients who've failed conservative care; "all true" would push a lot of them to "insufficient data" instead. Confirm the intended logic before encoding it as <code class="field">any_true</code> vs <code class="field">all_true</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">Built from <code class="field">knee_replacement_v0_0_1.yaml</code> and Optum's <i>Total Hip and Knee Replacement Decision Support Tool (2026)</i>. Hip runs an identical set of divergences — see the companion hip page for joint-specific code differences.</footer>
+</div>
+
+<script>
+(function(){
+  /* ---------- gap cards ---------- */
+  var gaps = [
+    { sev:"critical", title:"Stiffness flips from disqualifying to supporting",
+      old:"<code class='field'>chronic_knee_pain_with_djd</code> requires stiffness to be <b>absent</b> (no documented morning stiffness &gt;30 min) as one of three AND conditions.",
+      neu:"Stiffness and/or reduced range of motion is listed as one of four <b>clinical features that support</b> joint-based pathology — alongside persistent pain, functional limitations, and mechanical symptoms.",
+      example:"Patient has chronic knee pain, X-ray-confirmed DJD, and 45 minutes of morning stiffness. <b>Old pathway:</b> the stiffness fails the &quot;must be absent&quot; check, so <code class='field'>chronic_knee_pain_with_djd</code> comes back false — the patient is excluded at the very first gate, before conservative treatment or severity are ever evaluated. <b>New pathway:</b> that same stiffness is evidence <i>for</i> the diagnosis, so the patient proceeds normally.",
+      fix:"Remove the &quot;stiffness absent&quot; requirement from the AND condition entirely, or invert it into a fourth <code class='field'>supports_true</code> signal (alongside persistent pain, functional limits, mechanical symptoms) feeding an any-true / weighted check rather than a disqualifier." },
+    { sev:"critical", title:"Missing branch: intolerant of / contraindicated for conservative care",
+      old:"No equivalent feature or node. The tree goes straight from &quot;adequate trial completed&quot; to &quot;did it improve.&quot;",
+      neu:"When the 6-week trial isn't completed, the chart asks a distinct question first: is the patient unable to tolerate conservative care, or does he/she have contraindications? <b>Yes</b> routes forward to the severity check; <b>no</b> routes back to &quot;optimize conservative care and reassess.&quot;",
+      example:"A patient can't take NSAIDs (renal disease) and can't tolerate PT (severe deconditioning), so the 6-week trial was never completed. <b>Old pathway:</b> <code class='field'>adequate_treatment_trial</code> is false, and there's no other branch — the patient likely lands on &quot;insufficient data&quot; or gets funneled back to conservative care indefinitely, even though care genuinely isn't tolerable. <b>New pathway:</b> this patient is explicitly recognized and moved forward to the severity check instead of stalling.",
+      fix:"Add a new boolean feature, e.g. <code class='field'>conservative_care_intolerant_or_contraindicated</code>, and a new decision node between &quot;adequate trial&quot; and &quot;improved?&quot; that branches on it before falling through to the improvement check." },
+    { sev:"critical", title:"New severity & functional-impact gate before referral",
+      old:"&quot;No improvement after adequate trial&quot; is sufficient on its own to reach the refer terminal.",
+      neu:"A &quot;no improvement&quot; result must also clear a severity check: moderate-to-severe pain most days, pain at rest/night, progressive functional decline, or antalgic gait/assistive-device reliance — with duration and ADL impact ideally documented via a validated PROM instrument.",
+      example:"Two patients, identical treatment history, both &quot;no improvement.&quot; One has notes documenting pain at rest, declining function, and cane use — clears the gate, gets referred either way. The other's note just says &quot;no improvement, refer for ortho evaluation&quot; with nothing about severity. <b>Old pathway:</b> both get referred. <b>New pathway:</b> the second patient lands on &quot;insufficient data&quot; instead — not excluded, but stalled until someone documents severity.",
+      fix:"Add severity features (pain_most_days, pain_at_rest_or_night, progressive_functional_decline, antalgic_gait_or_assistive_device) and a derived gate feeding a new node between &quot;improved? = no&quot; and the refer terminal. Combination logic (any vs all) is an open question — see Ask the Team." },
+    { sev:"medium", title:"Conservative-trial duration is inconsistent",
+      old:"PT, NSAID, and exercise features use a 3-month window; CBT, weight management, assistive device, and &quot;other&quot; use 6 weeks.",
+      neu:"Every conservative measure uses the same &gt;6-week window, consistently, throughout the chart.",
+      example:"A patient completes 8 weeks of PT with no improvement. <b>Old pathway:</b> 8 weeks doesn't clear the 3-month PT threshold, so this trial doesn't count toward <code class='field'>adequate_treatment_trial</code> — even though the new chart would consider 8 weeks more than sufficient.",
+      fix:"Standardize all trial-duration features (PT, NSAID, exercise) to a 6-week threshold to match the other four." },
+    { sev:"medium", title:"No validated outcome-score feature (HOOS/KOOS)",
+      old:"No feature captures a patient-reported outcome measure.",
+      neu:"Table 3 ties the surgical indication to a validated instrument score — KOOS below 58 — alongside the qualitative severity criteria.",
+      example:"A patient's KOOS score is documented at 42 (well below the 58 threshold), clearly indicating unacceptable limitation — but nothing in the current pathway reads or uses that number anywhere in the decision.",
+      fix:"Add a numeric feature, e.g. <code class='field'>koos_score</code>, with a threshold check (&lt;58) that can independently satisfy or strengthen the severity gate." },
+    { sev:"low", title:"CBT listed in the old pathway, absent from the new chart's Table 1",
+      old:"CBT trial is one of seven conservative-treatment features with a 6-week window.",
+      neu:"Table 1 lists PT, exercise, education/self-management, weight-loss counseling, assistive devices, and pharmacologic management (NSAIDs, acetaminophen, intra-articular corticosteroid) only — no CBT.",
+      example:"—",
+      fix:"Confirm with the team whether CBT should be dropped, or kept as a supplemental &quot;other&quot; measure not called out by name in the source chart." }
+  ];
+  var sevLabel = {critical:"Structural", medium:"Content", low:"Note"};
+  var gaplistEl = document.getElementById('gaplist');
+  gaps.forEach(function(g,i){
+    var card = document.createElement('div');
+    card.className = 'gapcard';
+    var exampleHtml = g.example && g.example !== "—" ? '<div class="example"><span class="lab">Worked example</span><p>'+g.example+'</p></div>' : '';
+    card.innerHTML =
+      '<div class="gaphead" role="button" tabindex="0">'+
+        '<span class="sev '+g.sev+'">'+sevLabel[g.sev]+'</span><span class="num">0'+(i+1)+'</span><h3>'+g.title+'</h3>'+
+        '<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+      '</div>'+
+      '<div class="gapbody">'+
+        '<div class="compare-mini"><div class="mini-block old"><span class="lab">Old pathway</span>'+g.old+'</div><div class="mini-block new"><span class="lab">New pathway</span>'+g.neu+'</div></div>'+
+        exampleHtml+
+        '<div class="fix"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1v3M8 12v3M3 3l2 2M11 11l2 2M1 8h3M12 8h3M3 13l2-2M11 5l2-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span>'+g.fix+'</span></div>'+
+      '</div>';
+    card.querySelector('.gaphead').addEventListener('click', function(){ card.classList.toggle('open'); });
+    gaplistEl.appendChild(card);
+  });
+  if(gaplistEl.firstChild) gaplistEl.firstChild.classList.add('open');
+
+  /* ---------- tabs ---------- */
+  var tabs = document.querySelectorAll('nav.tabs button');
+  var panels = document.querySelectorAll('section.panel');
+  function activateTab(id){
+    tabs.forEach(function(b){ b.classList.toggle('active', b.dataset.tab===id); });
+    panels.forEach(function(p){ p.classList.toggle('active', p.id===id); });
+  }
+  tabs.forEach(function(btn){ btn.addEventListener('click', function(){ activateTab(btn.dataset.tab); }); });
+
+  /* ---------- flowchart engine ---------- */
+  function wrapLines(label, maxChars){
+    var words = label.split(' '); var lines = []; var cur = '';
+    words.forEach(function(w){
+      var t = cur ? cur+' '+w : w;
+      if(t.length > maxChars && cur){ lines.push(cur); cur = w; } else { cur = t; }
+    });
+    if(cur) lines.push(cur);
+    return lines;
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function nodeSvg(n){
+    var isTerm = n.type === 'terminal';
+    var maxChars = Math.floor((n.w-22) / (isTerm?5.7:6.0));
+    var lines = wrapLines(n.label, maxChars);
+    var lh = 13; var cx = n.x+n.w/2, cy = n.y+n.h/2;
+    var startY = cy - ((lines.length-1)*lh)/2 + 4;
+    var tspans = lines.map(function(l,i){ return '<tspan x="'+cx+'" y="'+(startY+i*lh)+'">'+esc(l)+'</tspan>'; }).join('');
+    var cls = 'fc-node'+(isTerm?' fc-term':'')+(n.variant?' '+n.variant:'');
+    var rectStyle='', textStyle='';
+    if(isTerm && n.colorVar){
+      rectStyle = ' style="fill:var('+n.colorVar+'-soft);stroke:var('+n.colorVar+')"';
+      textStyle = ' style="fill:var('+n.colorVar+')"';
+    }
+    var rx = isTerm ? (n.h/2) : 9;
+    return '<g class="'+cls+'" data-id="'+n.id+'" tabindex="0">'+
+      '<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="'+rx+'"'+rectStyle+'></rect>'+
+      '<text text-anchor="middle"'+textStyle+'>'+tspans+'</text></g>';
+  }
+  function edgePath(e, byId){
+    var from = byId[e.from], to = byId[e.to]; var pts;
+    if(e.points){ pts = e.points; }
+    else if(e.kind==='down'){ pts = [[from.x+from.w/2, from.y+from.h],[to.x+to.w/2, to.y]]; }
+    else { pts = [[from.x+from.w, from.y+from.h/2],[to.x, to.y+to.h/2]]; }
+    var d = 'M'+pts.map(function(p){return p[0]+','+p[1];}).join(' L');
+    var i0 = Math.floor((pts.length-1)/2), mid = pts[i0], midNext = pts[i0+1]||mid;
+    var lx = (mid[0]+midNext[0])/2, ly = (mid[1]+midNext[1])/2;
+    var labelSvg = '';
+    if(e.label){
+      var lw = (e.label.length*5.6)+10;
+      labelSvg = '<g class="fc-edgelabel"><rect x="'+(lx-lw/2)+'" y="'+(ly-8)+'" width="'+lw+'" height="15" rx="4"></rect><text x="'+lx+'" y="'+(ly+3)+'" text-anchor="middle">'+esc(e.label)+'</text></g>';
+    }
+    return '<path class="fc-edge" d="'+d+'" marker-end="url(#'+e.markerId+')"></path>'+labelSvg;
+  }
+  function buildSvg(nodes, edges, viewW, viewH, markerId, ariaLabel){
+    var byId = {}; nodes.forEach(function(n){ byId[n.id]=n; });
+    edges.forEach(function(e){ e.markerId = markerId; });
+    var defs = '<defs><marker id="'+markerId+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--text-faint)"></path></marker></defs>';
+    var edgesSvg = edges.map(function(e){ return edgePath(e, byId); }).join('');
+    var nodesSvg = nodes.map(nodeSvg).join('');
+    return '<svg viewBox="0 0 '+viewW+' '+viewH+'" role="img" aria-label="'+esc(ariaLabel)+'">'+defs+'<g>'+edgesSvg+nodesSvg+'</g></svg>';
+  }
+
+  /* ---------- knee pathway data ---------- */
+  var oldNodes = [
+    {id:'o1', pathway:'old', type:'decision', variant:'', x:10,y:10,w:280,h:46, label:"Chronic knee pain documented", detail:"Baseline eligibility check — any duration of chronic knee pain on record triggers this pathway."},
+    {id:'o2', pathway:'old', type:'decision', variant:'diverge', x:10,y:86,w:280,h:64, label:"DJD evidence present, AND no morning stiffness over 30 min", gapIndex:0, detail:"Requires DJD evidence AND the explicit absence of morning stiffness over 30 minutes. A patient with real stiffness fails this check and never reaches the rest of the pathway."},
+    {id:'o3', pathway:'old', type:'decision', variant:'', x:10,y:186,w:280,h:60, label:"Adequate conservative trial? (PT/NSAID 3mo, others 6wk)", detail:"Checks whether the patient completed the required trial window — 3 months for PT/NSAID/exercise, 6 weeks for CBT/weight management/assistive device/other."},
+    {id:'o4', pathway:'old', type:'decision', variant:'', x:10,y:282,w:280,h:46, label:"Symptoms improved?", detail:"Single yes/no on whether conservative treatment worked. No severity or functional-impact evidence is required either way."},
+    {id:'ot1', pathway:'old', type:'terminal', colorVar:'--low', x:320,y:96,w:150,h:44, label:"Excluded (stiffness disqualifies)", detail:"Patient is excluded from this pathway at the very first gate, solely because stiffness was documented."},
+    {id:'ot2', pathway:'old', type:'terminal', colorVar:'--low', x:320,y:200,w:150,h:44, label:"Continue conservative care", detail:"Trial not yet adequate — stays on conservative care."},
+    {id:'ot3', pathway:'old', type:'terminal', colorVar:'--low', x:320,y:284,w:150,h:44, label:"Continue conservative care", detail:"Symptoms improved — continue the conservative treatment that's working."},
+    {id:'ot4', pathway:'old', type:'terminal', colorVar:'--accent', x:65,y:356,w:170,h:44, label:"Refer for surgical evaluation", detail:"No improvement after an adequate trial is enough, on its own, to recommend surgical referral."}
+  ];
+  var oldEdges = [
+    {from:'o1',to:'o2',kind:'down',label:''},
+    {from:'o2',to:'o3',kind:'down',label:'Yes'},
+    {from:'o2',to:'ot1',kind:'right',label:'No'},
+    {from:'o3',to:'o4',kind:'down',label:'Yes'},
+    {from:'o3',to:'ot2',kind:'right',label:'No'},
+    {from:'o4',to:'ot3',kind:'right',label:'Yes'},
+    {from:'o4',to:'ot4',kind:'down',label:'No'}
+  ];
+
+  var newNodes = [
+    {id:'n1', pathway:'new', type:'decision', variant:'', x:10,y:10,w:280,h:46, label:"Chronic knee pain (>6 weeks) documented", detail:"Same baseline check, now explicit about the 6-week-plus duration."},
+    {id:'n2', pathway:'new', type:'decision', variant:'diverge', x:10,y:86,w:280,h:74, label:"Clinical features present (stiffness now supports) + radiograph confirms moderate–severe DJD", gapIndex:0, detail:"Stiffness and/or reduced range of motion is now one of four features that support the diagnosis — alongside persistent pain, functional limits, and mechanical symptoms like clicking or catching."},
+    {id:'n3', pathway:'new', type:'decision', variant:'', x:10,y:190,w:280,h:54, label:"6-week conservative trial completed?", detail:"Same idea, shorter window — 6 weeks instead of 3 months for every conservative measure."},
+    {id:'n4', pathway:'new', type:'decision', variant:'new', x:10,y:276,w:280,h:64, label:"Unable to tolerate / contraindicated?", gapIndex:1, detail:"A question the old pathway never asks: is the patient unable to tolerate conservative care, or does he/she have contraindications? Recognizes patients who couldn't complete the trial for a legitimate reason."},
+    {id:'n5', pathway:'new', type:'decision', variant:'', x:10,y:372,w:280,h:46, label:"Symptoms improved?", detail:"Same improvement check as before, now reached either after completing the trial or after clearing the intolerance question."},
+    {id:'n6', pathway:'new', type:'decision', variant:'new', x:10,y:450,w:280,h:74, label:"Severity & functional-impact evidence documented?", gapIndex:2, detail:"Before referring, the chart now wants documented evidence of severity — pain most days, pain at rest/night, functional decline, or antalgic gait/assistive-device use."},
+    {id:'nt1', pathway:'new', type:'terminal', colorVar:'--low', x:320,y:102,w:150,h:44, label:"Optimize conservative care & reassess", detail:"Sends the patient back to conservative care rather than excluding them outright."},
+    {id:'nt2', pathway:'new', type:'terminal', colorVar:'--low', x:320,y:290,w:150,h:44, label:"Optimize conservative care & reassess", detail:"Same outcome as above — back to conservative care, reached via the intolerance branch instead."},
+    {id:'nt3', pathway:'new', type:'terminal', colorVar:'--low', x:320,y:374,w:150,h:44, label:"Continue conservative care", detail:"Symptoms improved — continue conservative treatment. Unchanged from the old pathway."},
+    {id:'nt4', pathway:'new', type:'terminal', colorVar:'--open', x:320,y:460,w:150,h:50, label:"Insufficient data", detail:"No severity evidence on record — the pathway stops here rather than guessing. Someone needs to document it before this patient can be referred."},
+    {id:'nt5', pathway:'new', type:'terminal', colorVar:'--accent', x:65,y:558,w:170,h:44, label:"Refer for surgical evaluation", detail:"Referral is only reached once severity is actually documented — not from &quot;no improvement&quot; alone."}
+  ];
+  var newEdges = [
+    {from:'n1',to:'n2',kind:'down',label:''},
+    {from:'n2',to:'n3',kind:'down',label:'Yes'},
+    {from:'n2',to:'nt1',kind:'right',label:'No'},
+    {from:'n3',to:'n4',kind:'down',label:'No'},
+    {from:'n3',to:'n5',points:[[290,217],[306,217],[306,395],[290,395]],label:'Yes'},
+    {from:'n4',to:'nt2',kind:'right',label:'No'},
+    {from:'n4',to:'n5',kind:'down',label:'Yes'},
+    {from:'n5',to:'nt3',kind:'right',label:'Yes'},
+    {from:'n5',to:'n6',kind:'down',label:'No'},
+    {from:'n6',to:'nt4',kind:'right',label:'No'},
+    {from:'n6',to:'nt5',kind:'down',label:'Yes'}
+  ];
+
+  document.getElementById('fc-old').innerHTML = buildSvg(oldNodes, oldEdges, 500, 420, 'arrow-o-knee', 'Old knee pathway decision tree');
+  document.getElementById('fc-new').innerHTML = buildSvg(newNodes, newEdges, 500, 622, 'arrow-n-knee', 'New knee pathway decision tree');
+
+  var allById = {};
+  oldNodes.concat(newNodes).forEach(function(n){ allById[n.id] = n; });
+
+  function renderDetail(n){
+    var el = document.getElementById('fc-detail');
+    var pathTag = n.pathway === 'old' ? 'Old pathway' : 'New pathway';
+    var jump = (n.gapIndex != null) ? '<button class="djump" data-gap="'+n.gapIndex+'">View full comparison &rarr;</button>' : '';
+    el.innerHTML = '<div class="dhead"><span class="dpath">'+pathTag+'</span><span class="dtitle">'+esc(n.label)+'</span></div><div>'+n.detail+'</div>'+jump;
+    var btn = el.querySelector('.djump');
+    if(btn){
+      btn.addEventListener('click', function(){
+        activateTab('gaps');
+        var idx = parseInt(btn.dataset.gap, 10);
+        var cards = document.querySelectorAll('#gaplist .gapcard');
+        if(cards[idx]){
+          document.querySelectorAll('.gapcard.open').forEach(function(c){ c.classList.remove('open'); });
+          cards[idx].classList.add('open');
+          setTimeout(function(){ cards[idx].scrollIntoView({behavior:'smooth', block:'center'}); }, 60);
+        }
+      });
+    }
+  }
+
+  document.querySelectorAll('.fc-col').forEach(function(col){
+    col.addEventListener('click', function(ev){
+      var g = ev.target.closest('.fc-node');
+      if(!g) return;
+      document.querySelectorAll('.fc-node.selected').forEach(function(x){ x.classList.remove('selected'); });
+      g.classList.add('selected');
+      renderDetail(allById[g.dataset.id]);
+    });
+  });
+})();
+</script>
+
+</body></html>
