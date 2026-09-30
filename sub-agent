@@ -1,0 +1,51 @@
+Build a multi-agent "Architecture Review Board" for Claude Code in this repo.
+
+1. Five subagents in .claude/agents/ (model: sonnet; tools: Read, Grep, Glob, WebSearch, WebFetch):
+   solution-architect (Sol: domain boundaries, one owner per entity),
+   infra-architect (Ian: 10x load, no single point of failure),
+   security-architect (Sam: no PII exposure, can veto),
+   cost-architect (Cora: $2k/month budget, line-item cost math, can veto),
+   pragmatist-architect (Pat: 4 devs, ship in 6 weeks, pushback gentle/normal/brutal).
+   Each has a non-negotiable and a known blind spot. Rules: be concrete, raise at least 2
+   objections per design with a failure scenario, may concede, end every answer with the
+   JSON block the moderator asks for.
+
+2. A skill at .claude/skills/arch-review/SKILL.md (/arch-review <problem> [--preset
+   startup|enterprise|bank|game] [--quick] [--pushback ...]). The main session is the chair
+   and runs: clarify questions -> 5 blind proposals in parallel -> human checkpoint ->
+   anonymous critique (designs shuffled and labeled A-E; one event per critic-design pair;
+   rerun once if the critique is too soft) -> revise -> vote on 5 weighted criteria
+   (scale, security, cost, simplicity, speed) with vetoes and a pre-mortem -> decision
+   (winner or hybrid, consensus strong/contested/suspicious, dissent list, risk register).
+   Write ADR.md, and don't mark the meeting done until ADR.md exists.
+   After every step, rewrite design-reviews/<date>-<slug>/meeting-data.js as
+   window.MEETING = {...} (events with seq/phase/type/from/to/design/severity/title/body,
+   plus designs, votes, criteria, decision, dissent, risks, pendingQuestion).
+
+3. viewer.html (copied into each meeting folder as index.html), which re-reads
+   meeting-data.js every 3 seconds and shows:
+   - an animated SVG circle of the agents with the chair in the center and the human on top;
+     arrows colored by message type, with a replay slider and play controls
+   - a transcript grouped by phase, with agent filters
+   - design cards with Mermaid diagrams
+   - a weighted decision matrix and a heatmap of who scored what
+   - the final decision with dissent and risks
+   - a short description of each agent
+   It supports light and dark mode.
+
+4. server.py (Python standard library only, 127.0.0.1:8765) with a start page where I type a
+   problem, choose the preset, pushback and quick mode, and see past meetings.
+   POST /api/start creates the meeting folder and runs, in the background:
+     claude -p "/arch-review ... --meeting-dir <dir> --web" --permission-mode acceptEdits
+       --output-format stream-json --verbose --disallowedTools AskUserQuestion
+       --allowedTools Agent Read Write Edit Glob Grep WebSearch WebFetch
+       "Bash(sh .claude/skills/arch-review/wait-answer.sh:*)"
+   with the output going to run.log. In --web mode the chair asks questions by writing
+   pendingQuestion into meeting-data.js; the viewer shows an answer form that posts to
+   /api/answer, which writes answers/<id>.json; wait-answer.sh blocks until that file exists
+   (Bash timeout 600000). Also add /api/status (a banner with the last log message if the
+   chair dies) and /api/resume, which relaunches with --resume so the chair continues from
+   the last completed round.
+
+5. Include a sample meeting in design-reviews/sample/ so the viewer can be tested without
+   running agents. Then test the viewer in a browser and run one --quick meeting end to end.
